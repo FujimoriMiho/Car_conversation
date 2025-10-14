@@ -1,0 +1,140 @@
+@import "tailwindcss";
+
+/* AI Avatar Animations */
+@keyframes speaking {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+@keyframes eyeBlink {
+  0%, 90%, 100% {
+    height: 12px;
+  }
+  95% {
+    height: 2px;
+  }
+}
+
+@keyframes mouthTalk {
+  0%, 100% {
+    width: 32px;
+    height: 16px;
+    border-radius: 9999px;
+  }
+  25% {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+  }
+  50% {
+    width: 40px;
+    height: 12px;
+    border-radius: 9999px;
+  }
+  75% {
+    width: 28px;
+    height: 20px;
+    border-radius: 9999px;
+  }
+}
+
+@keyframes listening {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+  }
+  50% {
+    box-shadow:
+      0 0 40px rgba(59, 130, 246, 0.8),
+      0 0 60px rgba(59, 130, 246, 0.3);
+  }
+}
+
+
+/* AIアバターの色をオレンジ系に */
+#ai-avatar {
+  background: linear-gradient(135deg, #ff9800 0%, #ffc107 100%) !important;
+}
+
+.ai-speaking #ai-avatar {
+  animation: speaking 0.6s ease-in-out infinite;
+}
+
+.ai-speaking #ai-eye-left,
+.ai-speaking #ai-eye-right {
+  animation: eyeBlink 3s ease-in-out infinite;
+}
+
+.ai-speaking #ai-mouth {
+  animation: mouthTalk 0.8s ease-in-out infinite;
+}
+
+.ai-listening #ai-avatar {
+  animation: listening 2s ease-in-out infinite;
+}
+
+.ai-idle #ai-eye-left,
+.ai-idle #ai-eye-right {
+  animation: eyeBlink 4s ease-in-out infinite;
+}
+
+/* Gradient text animation */
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.gradient-text {
+  background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+  background-size: 400% 400%;
+  animation: gradientShift 3s ease infinite;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Smooth transitions */
+* {
+  transition-property:
+    color,
+    background-color,
+    border-color,
+    text-decoration-color,
+    fill,
+    stroke,
+    opacity,
+    box-shadow,
+    transform,
+    filter,
+    backdrop-filter;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+/* Custom scrollbar for debug panel */
+#ai-messages::-webkit-scrollbar {
+  width: 4px;
+}
+
+#ai-messages::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+#ai-messages::-webkit-scrollbar-thumb {
+  background: rgba(34, 197, 94, 0.5);
+  border-radius: 2px;
+}
+
+#ai-messages::-webkit-scrollbar-thumb:hover {
+  background: rgba(34, 197, 94, 0.7);
+}

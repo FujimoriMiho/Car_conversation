@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI音声アシスタント</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  </head>
+  <body class="bg-white min-h-screen overflow-x-hidden">
+    <div id="app" class="min-h-screen flex flex-col">
+      <!-- Header -->
+      <header class="text-center py-6 px-4">
+        <h1 class="text-3xl md:text-4xl font-bold text-white mb-2 tracking-wide">
+          AI音声アシスタント
+        </h1>
+        <p class="text-indigo-200 text-sm md:text-base">
+          あなたの質問にリアルタイムで音声で回答します
+        </p>
+      </header>
+
+      <!-- Main Content -->
+      <main class="flex-1 flex flex-col items-center justify-center px-4 py-8">
+        <!-- AI Avatar Container -->
+        <div class="relative mb-8">
+          <!-- Outer Ring (Pulse Animation) -->
+          <div
+            id="ai-outer-ring"
+            class="absolute inset-0 w-48 h-48 md:w-56 md:h-56 rounded-full border-4 border-blue-400/30 animate-pulse"
+          >
+          </div>
+
+          <!-- Middle Ring (Rotating) -->
+          <div
+            id="ai-middle-ring"
+            class="absolute inset-4 w-40 h-40 md:w-48 md:h-48 rounded-full border-2 border-purple-400/40 animate-spin"
+            style="animation-duration: 8s"
+          >
+          </div>
+
+          <!-- AI Avatar -->
+          <div
+            id="ai-avatar"
+            class="relative w-48 h-48 md:w-56 md:h-56 rounded-full bg-gradient-to-br from-orange-400 to-yellow-400 flex items-center justify-center shadow-2xl transition-transform duration-300"
+          >
+            <!-- Face -->
+            <div class="text-white">
+              <!-- Eyes -->
+              <div class="flex justify-center mb-4">
+                <div
+                  id="ai-eye-left"
+                  class="w-3 h-3 bg-white rounded-full mx-2 transition-all duration-200"
+                >
+                </div>
+                <div
+                  id="ai-eye-right"
+                  class="w-3 h-3 bg-white rounded-full mx-2 transition-all duration-200"
+                >
+                </div>
+              </div>
+              <!-- Mouth -->
+              <div
+                id="ai-mouth"
+                class="w-8 h-4 border-2 border-white rounded-full mx-auto transition-all duration-200"
+              >
+              </div>
+            </div>
+
+            <!-- Sound Waves -->
+            <div
+              id="sound-waves"
+              class="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-300"
+            >
+              <div class="absolute w-16 h-16 border-2 border-white/30 rounded-full animate-ping">
+              </div>
+              <div
+                class="absolute w-24 h-24 border-2 border-white/20 rounded-full animate-ping"
+                style="animation-delay: 0.3s"
+              >
+              </div>
+              <div
+                class="absolute w-32 h-32 border-2 border-white/10 rounded-full animate-ping"
+                style="animation-delay: 0.6s"
+              >
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Status Text -->
+        <div id="ai-status" class="text-center mb-8">
+          <h2 class="text-xl md:text-2xl text-white font-medium mb-2">
+            準備完了
+          </h2>
+          <p class="text-indigo-200 text-sm md:text-base">
+            スタートボタンを押して会話を始めてください
+          </p>
+        </div>
+
+        <!-- Control Buttons -->
+        <div class="flex gap-4 mb-8">
+          <button
+            id="ai-start-button"
+            class="px-8 py-3 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-full shadow-lg transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+          >
+            🎤 スタート
+          </button>
+          <button
+            id="ai-stop-button"
+            class="px-8 py-3 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-full shadow-lg transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+            disabled
+          >
+            🛑 ストップ
+          </button>
+        </div>
+
+        <!-- Settings Panel -->
+        <div class="w-full max-w-md">
+          <button
+            id="settings-toggle"
+            class="w-full px-4 py-2 bg-orange-400 hover:bg-orange-500 text-white rounded-lg transition-colors duration-200 mb-4 backdrop-blur-sm"
+          >
+            ⚙️ 設定
+          </button>
+          <div
+            id="settings-panel"
+            class="hidden bg-white/10 backdrop-blur-sm rounded-lg p-4 mb-4"
+          >
+            <label
+              for="input"
+              class="block text-white text-sm font-medium mb-2"
+            >
+              会話の設定情報:
+            </label>
+            <textarea
+              id="input"
+              class="w-full h-32 px-3 py-2 bg-white/20 border-4 border-orange-500 rounded-lg text-black placeholder-black/50 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none"
+              placeholder="例: ユーザーは20代の学生で、最新技術に興味があります。親しみやすい口調で話してください。"
+            ></textarea>
+          </div>
+        </div>
+
+        <!-- Error Display -->
+        <div
+          id="ai-error"
+          class="text-red-300 text-center text-sm max-w-md hidden"
+        >
+        </div>
+      </main>
+
+      <!-- Messages Display (Hidden by default) -->
+      <div
+        id="debug-panel"
+        class="hidden fixed bottom-4 right-4 w-80 max-h-60 bg-black/80 backdrop-blur-sm rounded-lg overflow-hidden"
+      >
+        <div class="p-2 bg-gray-800 text-white text-xs font-medium border-b border-gray-700">
+          デバッグ情報
+        </div>
+        <pre
+          id="ai-messages"
+          class="text-xs text-green-400 p-2 overflow-auto max-h-48 whitespace-pre-wrap"
+        ></pre>
+      </div>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
