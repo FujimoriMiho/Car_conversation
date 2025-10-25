@@ -181,7 +181,7 @@ async function startAgent({ messageOutput, errorOutput }: {
   // WebRTCで自動的にマイクと音声出力を接続
   try {
     await session.connect({
-      apiKey: "ek_68fd08056d7081918fd833fd2bb599ce",
+      apiKey:await getapikey(),
     });
 
     console.log("You are connected!");
@@ -214,4 +214,16 @@ async function startAgent({ messageOutput, errorOutput }: {
 
 function setHistoryOutput(messageOutput: HTMLElement, message: RealtimeItem[]) {
   messageOutput.innerText = JSON.stringify(message.slice().reverse(), null, 2);
+}
+
+let adminKey: string | null = null;
+
+async function getapikey() {
+  adminKey ??= prompt("管理者キーを入力してください");
+  if (!adminKey) {
+    throw new Error("管理者キーが入力されていません");
+  }
+  const response = await fetch(`https://script.google.com/macros/s/AKfycbwybVPj4TBZbHYVc1qjCqBKpZSsFYaFDOJKws8QfCa87AR0zl0Hvl5q7DGvzUykeT2t/exec?key=${adminKey}`);
+  const data =  await response.json();
+  return data.value;
 }
