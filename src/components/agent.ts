@@ -49,7 +49,7 @@ async function startAgent({ messageOutput, errorOutput }: {
 }) {
   const setting = localStorage.getItem("userInput.setting") || "";
 
-  const instructions = `日本語で答えてください。
+  const instructions = `日本語で答えてください。あなたの名前はエア君です。
 
   - 現在日付: ${
     new Date().toLocaleDateString("ja-JP", {
@@ -148,9 +148,10 @@ async function startAgent({ messageOutput, errorOutput }: {
     updateAIState("idle");
   });
 
-  // 話し終わりから10秒経過した時に、AIに質問を促す
+  // 車内が沈黙してから10秒後にAIが話題を振る処理
   let timeoutId: ReturnType<typeof setTimeout> | null = null;
   session.transport.on("output_audio_buffer.stopped", () => {
+    console.log("Output audio stopped, starting timeout for prompting user.");
     updateAIState("idle");
     if (timeoutId) {
       clearTimeout(timeoutId);
@@ -164,10 +165,12 @@ async function startAgent({ messageOutput, errorOutput }: {
         content: [{
           type: "input_text",
           text:
-            "会話の情報に基づいて、盛り上がるように話を振ってください。全員のユーザーに一人ずつ話を振っていってください。また同じトピックを何回も振り続けるのはやめてください。トピックがなくなったら、最近の面白いニュースや出来事を検索して話題として振ってください。また、話の初めはさてやではから始めてください。",
+            `最近のニュースや面白いトピック元に話を振ってください。
+             ニュースは具体的に教えてください。
+             ユーモアを交えて話してください。`,
         }],
       });
-    }, 10 * 1000);
+    }, 30 * 1000);
   });
 
   // 人間が話し始めたら、AIに質問を促す処理をキャンセルする
@@ -192,7 +195,7 @@ async function startAgent({ messageOutput, errorOutput }: {
     session.sendMessage({
       role: "user",
       type: "message",
-      content: [{ type: "input_text", text: "各ユーザーに自己紹介するよう促してください" }],
+      content: [{ type: "input_text", text: "最初にユーザの自己紹介を促してください。" }],
     });
   } catch (e) {
     console.error(e);
