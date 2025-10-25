@@ -181,7 +181,7 @@ async function startAgent({ messageOutput, errorOutput }: {
   // WebRTCで自動的にマイクと音声出力を接続
   try {
     await session.connect({
-      apiKey: "ek_68ede1a07af081918b1c99b4d378f366",
+      apiKey: "ek_68fd08056d7081918fd833fd2bb599ce",
     });
 
     console.log("You are connected!");
