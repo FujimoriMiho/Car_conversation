@@ -195,7 +195,7 @@ async function startAgent({ messageOutput, errorOutput }: {
     session.sendMessage({
       role: "user",
       type: "message",
-      content: [{ type: "input_text", text: "最初にユーザの自己紹介を促してください。" }],
+      content: [{ type: "input_text", text: "最初にユーザの自己紹介を促してください。最初の挨拶は「こんにちは」で始めてください" }],
     });
   } catch (e) {
     console.error(e);
