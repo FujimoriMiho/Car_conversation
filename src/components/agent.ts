@@ -82,6 +82,10 @@ async function startAgent({ messageOutput, errorOutput }: {
   # 会話の終了
 
   - ユーザーから黙るよう指示された場合は、返答しないでください。
+
+  # 会話のマナー
+  -　ユーザーが話しているときは、話を遮らないでください。
+  - ユーザーが話し終わるまで待ってから返答してください。
   `;
 
   const agent = new RealtimeAgent({
