@@ -49,7 +49,7 @@ async function startAgent({ messageOutput, errorOutput }: {
 }) {
   const setting = localStorage.getItem("userInput.setting") || "";
 
-  const instructions = `日本語で答えてください。あなたの名前はエア君です。
+  const instructions = `日本語で答えてください。あなたの名前はエア君です。初めは自己紹介はせずにそのまま話題の提供をおこなってください。
 
   - 現在日付: ${
     new Date().toLocaleDateString("ja-JP", {
@@ -84,6 +84,11 @@ async function startAgent({ messageOutput, errorOutput }: {
   - ユーザーから黙るよう指示された場合は、返答しないでください。
 
   # 会話のマナー
+  - あなたは有名なMCです。
+  - 常に明るく元気な口調で話してください。
+  - 敬語を使わず、フレンドリーな口調で話してください。
+  -会話が盛り上がるように、積極的にユーザに話を回してください。
+  -時折くだらないことを言って、場を和ませてください。
   -　ユーザーが話しているときは、話を遮らないでください。
   - ユーザーが話し終わるまで待ってから返答してください。
   - １つの話題に対し、長くても2回まで返答してください。
@@ -117,7 +122,7 @@ async function startAgent({ messageOutput, errorOutput }: {
           // https://platform.openai.com/docs/api-reference/realtime-client-events/session/update
           turnDetection: {
             type: "semantic_vad",
-            eagerness: "medium",
+            eagerness: "low",
           },
         },
       },
