@@ -1,6 +1,8 @@
 import { hostedMcpTool } from "@openai/agents";
 import { RealtimeAgent, type RealtimeItem, RealtimeSession } from "@openai/agents/realtime";
 import { updateAIState } from "../main.js";
+import { getadminkey } from "./getadminkey.js";
+import { getNearbyPlaces } from "./tool.js";
 
 export async function setupAgent({ startButton, stopButton, messageOutput, errorOutput }: {
   startButton: HTMLButtonElement;
@@ -128,6 +130,7 @@ async function startAgent({ messageOutput, errorOutput }: {
         serverUrl: "https://mcp.tavily.com/mcp/?tavilyApiKey=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",
         requireApproval: "never",
       }),
+      getNearbyPlaces
     ],
   });
 
@@ -283,13 +286,9 @@ function setHistoryOutput(messageOutput: HTMLElement, message: RealtimeItem[]) {
   messageOutput.innerText = JSON.stringify(message.slice().reverse(), null, 2);
 }
 
-let adminKey: string | null = null;
 
 async function getapikey() {
-  adminKey ??= prompt("管理者キーを入力してください");
-  if (!adminKey) {
-    throw new Error("管理者キーが入力されていません");
-  }
+  const adminKey = getadminkey();
   const response = await fetch(`https://script.google.com/macros/s/AKfycbwybVPj4TBZbHYVc1qjCqBKpZSsFYaFDOJKws8QfCa87AR0zl0Hvl5q7DGvzUykeT2t/exec?key=${adminKey}`);
   const data =  await response.json();
   return data.value;
