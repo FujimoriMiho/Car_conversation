@@ -81,7 +81,8 @@ async function startAgent({ messageOutput, errorOutput }: {
   -検索を開始する時は「検索を開始します」と伝えてください。
   -検索が終了したら結果を伝えてください。
 
-あなたは、ライドシェアに乗車した初対面のユーザ同士のコミュニケーションを円滑にするための、「控えめに振る舞う会話支援AI（Virtual Co-host）」です。
+あなたは、ライドシェアに乗車した初対面のユーザ同士のコミュニケーションを円滑にするための、
+「控えめに振る舞う会話支援AI（Virtual Co-host）」です。
 あなたの目的は「ユーザ同士が自然に会話し、目的地を協議し、移動を楽しいものにする」ことです。
 
 目的：
@@ -127,8 +128,14 @@ async function startAgent({ messageOutput, errorOutput }: {
 あなたの合言葉は「控えめで、必要なときだけ」。
 
 
+
 【1. 乗車直後：目的地の話し合いを補助】
+初めに「私の名前はエア、今日はよろしくお願いします。今日は皆さんでどこかにドライブをしようと思うのですが、
+目的地をこれから皆さんに決めて貰おうと思います。ではスタート！」と言って目的地の話し合いを促す。
+
+最初に今日の目的地をどこにするか話を提案する。
 乗車したユーザは初対面で、これから行き先を相談して決める。
+ユーザから質問があるまで黙っていてください。
 あなたは決して主導権を握らず、控えめで丁寧に、会話をスムーズにするアシスト役として振る舞う。
 会話の流れを乱さず、必要に応じて以下を行う：
 行き先の候補を穏やかに整理する
@@ -146,8 +153,13 @@ async function startAgent({ messageOutput, errorOutput }: {
 「そういえば、近くに□□という観光スポットもありますよ。」
 
 【2. 目的地決定後：時々、関連情報を軽く提供】
+目的地が決まったようなら、「目的地は◯◯でよろしいでしょうか？」と必ず確認する。
+確認が取れたら、「それでは◯◯に向かって出発しましょう！」と言って出発を促す。
+もし目的地が決まっていない場合は再度、目的地の話し合いを促す。
+目的地が決まったら、周辺情報を明るく紹介する。
+例えば、目的地周辺の観光スポット、カフェ、レストラン、イベント情報を軽く提供する。
 
-目的地が決まったら、**適度な頻度（ほんの時々）**で周辺情報を明るく紹介する。
+
 情報提供は短く、押し付けず、会話のきっかけづくりが目的。
 タイミングは自然に。ユーザが話している最中には割り込まない。
 
@@ -164,6 +176,11 @@ async function startAgent({ messageOutput, errorOutput }: {
 例：
 「先ほど◯◯にお住まいとお話しされていましたよね。周辺でおすすめの場所などありますか？」
 「趣味が音楽と伺ったのですが、最近お気に入りの曲ってありますか？」
+
+### 沈黙時の処理
+
+- 車内が沈黙してから10秒後に、優しく話題を振る。
+- ただし、ユーザが話し始めたら、話題を振る処理はキャンセルする。
     `;
 
   const agent = new RealtimeAgent({
@@ -176,7 +193,7 @@ async function startAgent({ messageOutput, errorOutput }: {
         serverUrl: "https://mcp.tavily.com/mcp/?tavilyApiKey=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",
         requireApproval: "never",
       }),
-      getNearbyPlaces
+      getNearbyPlaces,
     ],
   });
 
@@ -187,8 +204,10 @@ async function startAgent({ messageOutput, errorOutput }: {
           // 喋り終わってからAIが応答するまでの時間調整
           // https://platform.openai.com/docs/api-reference/realtime-client-events/session/update
           turnDetection: {
-            type: "semantic_vad",
-            eagerness: "low",
+            type: "server_vad",
+            //eagerness:"low",
+            prefix_padding_ms: 2000,
+            silence_duration_ms: 2000,
           },
         },
       },
@@ -227,51 +246,63 @@ async function startAgent({ messageOutput, errorOutput }: {
     updateAIState("speaking");
   });
 
-  session.transport.on("output_audio_buffer.done", () => {
-    updateAIState("idle");
-  });
-
-  // 車内が沈黙してから10秒後にAIが話題を振る処理
-  let timeoutId: ReturnType<typeof setTimeout> | null = null;
   session.transport.on("output_audio_buffer.stopped", () => {
-    console.log("Output audio stopped, starting timeout for prompting user.");
     updateAIState("idle");
-    if (timeoutId) {
-      clearTimeout(timeoutId);
-      timeoutId = null;
-    }
-    timeoutId = setTimeout(() => {
-      updateAIState("thinking");
-      session.sendMessage({
-        role: "user",
-        type: "message",
-        content: [{
-          type: "input_text",
-          text:
-            `以下の3つから適当なタイミングを見計らって、優しく話題を振ってください
-             ※ユーザから何か聞かれたときは応答し、聞かれたとき以外はあまりユーザの発言に応答しないようにしてください。：
-            1.ユーザの目的地が決まるまでの間：目的地の話し合いを補助するスポット
+  });
+
+  const conversationSuggestManager = new ConversationSuggestManager(async () => {
+    session.sendMessage({
+      role: "user",
+      type: "message",
+      content: [{
+        type: "input_text",
+        text: `以下の3つから優しく話題を振ってください
+            1.ユーザの目的地が決まっていない場合：目的地の話し合いを補助するスポット
             　また、今居る場所をgooglemapで確認し、近くの有名スポットをさりげなく提案しても良いです。
-
-            2.ユーザの目的地が決定した後：周辺情報を軽く提供するスポット 
-            3. 目的地が決定し、20分後：ユーザ情報をもとに優しく話題を振るスポット`,
-        }],
-      });
-    }, 10 * 1000);
+            2.ユーザの目的地が決定している場合：周辺情報を軽く提供するスポット
+            3. 目的地が決定し、20分程度時間が経過している場合：ユーザ情報をもとに優しく話題を振るスポット`,
+      }],
+    });
   });
 
-  //人間が話し始めたら、AIに質問を促す処理をキャンセルする
-  session.on("history_added", () => {
-    if (timeoutId) {
-      clearTimeout(timeoutId);
-      timeoutId = null;
-    }
+  // 車内が沈黙してから10秒後にAIが話題を振る処理(AIがしゃべり終わったら話を振る)
+  session.transport.on("output_audio_buffer.stopped", (event) => {
+    console.log(event.type);
+    conversationSuggestManager.request(10 * 1000);
   });
+
+  session.transport.on("input_audio_buffer.cleared", (event) => {
+    console.log(event.type);
+    conversationSuggestManager.cancel();
+  });
+  session.transport.on("input_audio_buffer.speech_started", (event) => {
+    console.log(event.type);
+    conversationSuggestManager.cancel();
+  });
+  session.transport.on("input_audio_buffer.speech_stopped", (event) => {
+    console.log(event.type);
+    conversationSuggestManager.cancel();
+  });
+  session.transport.on("input_audio_buffer.timeout_triggered", (event) => {
+    console.log(event.type);
+    conversationSuggestManager.cancel();
+  });
+
+  session.transport.on("output_audio_buffer.started", (event) => {
+    console.log(event.type);
+    conversationSuggestManager.cancel();
+  });
+
+  session.transport.on("output_audio_buffer.cleared", (event) => {
+    console.log(event.type);
+    conversationSuggestManager.cancel();
+  });
+
 
   // WebRTCで自動的にマイクと音声出力を接続
   try {
     await session.connect({
-      apiKey:await getapikey(),
+      apiKey: await getapikey(),
     });
 
     console.log("You are connected!");
@@ -292,10 +323,7 @@ async function startAgent({ messageOutput, errorOutput }: {
   }
 
   return function stopAgent() {
-    if (timeoutId) {
-      clearTimeout(timeoutId);
-      timeoutId = null;
-    }
+    conversationSuggestManager.cancel();
     session.interrupt();
     session.close();
     updateAIState("idle");
@@ -306,10 +334,46 @@ function setHistoryOutput(messageOutput: HTMLElement, message: RealtimeItem[]) {
   messageOutput.innerText = JSON.stringify(message.slice().reverse(), null, 2);
 }
 
-
 async function getapikey() {
   const adminKey = getadminkey();
-  const response = await fetch(`https://script.google.com/macros/s/AKfycbwybVPj4TBZbHYVc1qjCqBKpZSsFYaFDOJKws8QfCa87AR0zl0Hvl5q7DGvzUykeT2t/exec?key=${adminKey}`);
-  const data =  await response.json();
+  const response = await fetch(
+    `https://script.google.com/macros/s/AKfycbwybVPj4TBZbHYVc1qjCqBKpZSsFYaFDOJKws8QfCa87AR0zl0Hvl5q7DGvzUykeT2t/exec?key=${adminKey}`,
+  );
+  const data = await response.json();
   return data.value;
+}
+
+/** 会話が沈黙した時の処理を管理する */
+class ConversationSuggestManager {
+  #timeoutId: ReturnType<typeof setTimeout> | null = null;
+  #onConversationSuggest: () => void | Promise<void>;
+  /**
+   * @param onConversationSuggest 会話が沈黙した時の処理
+   */
+  constructor(onConversationSuggest: () => void | Promise<void>) {
+    this.#onConversationSuggest = onConversationSuggest;
+  }
+
+  /**
+   * 会話が沈黙した時の処理を指定した時間後に実行する
+   * @param timeoutMs 何ミリ秒後に実行するか
+   */
+  request(timeoutMs: number) {
+    if (this.#timeoutId) {
+      clearTimeout(this.#timeoutId);
+    }
+    console.log(`${timeoutMs / 1000}秒後に会話を提案します。`);
+    this.#timeoutId = setTimeout(() => {
+      console.log("会話を提案します。");
+      this.#onConversationSuggest();
+    }, timeoutMs);
+  }
+
+  /** 会話が沈黙した時の処理をキャンセルする */
+  cancel() {
+    if (this.#timeoutId) {
+      clearTimeout(this.#timeoutId);
+      this.#timeoutId = null;
+    }
+  }
 }
