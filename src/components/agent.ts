@@ -295,7 +295,7 @@ ${
   session.transport.on("output_audio_buffer.stopped", () => {
     updateAIState("idle");
   });
-
+                                                          
   const conversationSuggestManager = new ConversationSuggestManager(async () => {
     session.sendMessage({
       role: "user",
